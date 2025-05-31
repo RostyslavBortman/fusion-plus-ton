@@ -6,21 +6,50 @@
       "path": "contracts/EscrowDst.tact",
       "output": "build/escrow-dst",
       "mode": "full",
-      "options": { "debug": false, "external": false }
+      "options": {
+        "debug": false,
+        "external": false
+      }
     },
     {
       "name": "escrow-src",
       "path": "contracts/EscrowSrc.tact",
       "output": "build/escrow-src",
       "mode": "full",
-      "options": { "debug": false, "external": false }
+      "options": {
+        "debug": false,
+        "external": false
+      }
     },
     {
       "name": "fee-bank",
-      "path": "contracts/FeeBank.tact",
+      "path": "contracts/FeeBank/FeeBank.tact",
       "output": "build/fee-bank",
       "mode": "full",
-      "options": { "debug": false, "external": false }
+      "options": {
+        "debug": false,
+        "external": false
+      }
+    },
+    {
+      "name": "user-deposit",
+      "path": "contracts/FeeBank/UserDepositContract.tact",
+      "output": "build/user-deposit-contract",
+      "mode": "full",
+      "options": {
+        "debug": false,
+        "external": false
+      }
+    },
+    {
+      "name": "fee-bank-charger",
+      "path": "contracts/FeeBank/FeeBankCharger.tact",
+      "output": "build/fee-bank-charger",
+      "mode": "full",
+      "options": {
+        "debug": false,
+        "external": false
+      }
     }
   ]
 }
