@@ -12,15 +12,15 @@ contract FeeBankCharger with Deployable {
     init(feeToken: Slice, owner: Address){
         self.feeToken = feeToken;
         self.owner = owner;
-        // Deploy FeeBank contract
+        // Deploy FeeBank contract immediately
         let feeBankInit = initOf FeeBank(feeToken, myAddress().asSlice(), owner.asSlice());
         self.feeBank = contractAddress(feeBankInit);
-        // Deploy FeeBank with initial funds
+        // Send deployment message
         send(SendParameters{
                 to: self.feeBank,
                 value: ton("0.1"),
                 bounce: false,
-                body: beginCell().endCell(),
+                body: Deploy{queryId: 0}.toCell(),
                 code: feeBankInit.code,
                 data: feeBankInit.data
             }
@@ -110,7 +110,7 @@ contract FeeBankCharger with Deployable {
                 to: userAddr,
                 value: ton("0.03"),
                 bounce: true,
-                body: InternalCreditQuery{respondTo: msg.respondTo}.toCell()
+                body: InternalCreditQuery{respondTo: myAddress()}.toCell()
             }
         );
     }
@@ -119,7 +119,7 @@ contract FeeBankCharger with Deployable {
     receive(msg: InternalCreditResponse){
         let expectedAddr = self.userDepositAddress(msg.account);
         require(sender() == expectedAddr, "InvalidUserContract");
-        // Forward response to requester (or FeeBank)
+        // Forward response to FeeBank
         send(SendParameters{
                 to: self.feeBank,
                 value: 0,
@@ -148,7 +148,6 @@ contract FeeBankCharger with Deployable {
     receive(msg: InternalFeeCharged){
         let expectedAddr = self.userDepositAddress(msg.account);
         require(sender() == expectedAddr, "InvalidUserContract");
-
         // Fee successfully charged, can emit event or process further
     }
 
