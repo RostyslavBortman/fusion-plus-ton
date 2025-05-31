@@ -50,6 +50,16 @@
         "debug": false,
         "external": false
       }
+    },
+    {
+      "name": "merkle-storage-invalidator",
+      "path": "contracts/MerkleValidator/MerkleStorageInvalidator.tact",
+      "output": "build/merkle-storage-invalidator",
+      "mode": "full",
+      "options": {
+        "debug": false,
+        "external": false
+      }
     }
   ]
 }

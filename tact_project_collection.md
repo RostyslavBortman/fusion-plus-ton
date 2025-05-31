@@ -9,7 +9,7 @@ Total files found: 4
 
 ```tact
 import "@stdlib/deploy";
-import "./UserDeposit.tact";
+import "./UserDepositContract.tact";
 import "./FeeBankMessages.tact";
 
 // ==================== Helper functions ====================
@@ -45,7 +45,7 @@ fun sendTokens(token: Slice, to: Slice, amount: Int, queryId: Int) {
 
 // ==================== FeeBank Main Contract ====================
 
-contract FeeBank {
+contract FeeBank with Deployable {
     feeToken: Slice;
     charger: Slice;
     owner: Slice;
@@ -276,7 +276,7 @@ contract FeeBank {
 import "@stdlib/deploy";
 import "./FeeBankMessages.tact";
 import "./FeeBank.tact";
-import "./UserDeposit.tact";
+import "./UserDepositContract.tact";
 
 // ==================== FeeBankCharger Contract ====================
 
@@ -287,15 +287,13 @@ contract FeeBankCharger with Deployable {
     init(feeToken: Slice, owner: Address){
         self.feeToken = feeToken;
         self.owner = owner;
-        // Deploy FeeBank contract
         let feeBankInit = initOf FeeBank(feeToken, myAddress().asSlice(), owner.asSlice());
         self.feeBank = contractAddress(feeBankInit);
-        // Deploy FeeBank with initial funds
         send(SendParameters{
                 to: self.feeBank,
                 value: ton("0.1"),
                 bounce: false,
-                body: beginCell().endCell(),
+                body: Deploy{queryId: 0}.toCell(),
                 code: feeBankInit.code,
                 data: feeBankInit.data
             }
@@ -385,7 +383,7 @@ contract FeeBankCharger with Deployable {
                 to: userAddr,
                 value: ton("0.03"),
                 bounce: true,
-                body: InternalCreditQuery{respondTo: msg.respondTo}.toCell()
+                body: InternalCreditQuery{respondTo: myAddress()}.toCell()
             }
         );
     }
@@ -394,7 +392,7 @@ contract FeeBankCharger with Deployable {
     receive(msg: InternalCreditResponse){
         let expectedAddr = self.userDepositAddress(msg.account);
         require(sender() == expectedAddr, "InvalidUserContract");
-        // Forward response to requester (or FeeBank)
+        // Forward response to FeeBank
         send(SendParameters{
                 to: self.feeBank,
                 value: 0,
@@ -423,7 +421,6 @@ contract FeeBankCharger with Deployable {
     receive(msg: InternalFeeCharged){
         let expectedAddr = self.userDepositAddress(msg.account);
         require(sender() == expectedAddr, "InvalidUserContract");
-
         // Fee successfully charged, can emit event or process further
     }
 
@@ -563,11 +560,10 @@ message(0x6f1e8b3c) InternalFeeCharged {
 
 ================================================================================
 
-## File 4: UserDeposit.tact
-**Path:** UserDeposit.tact
+## File 4: UserDepositContract.tact
+**Path:** UserDepositContract.tact
 
 ```tact
-import "@stdlib/deploy";
 import "./FeeBankMessages.tact";
 // ==================== Init structure ====================
 
@@ -586,8 +582,7 @@ contract UserDepositContract {
     feeToken: Slice;
     charger: Address;
     deposit: Int as uint256;
-    creditAllowance: Int as uint256; // Available credit for this user
-
+    creditAllowance: Int as uint256;
     init(initData: UserDepositInit){
         self.parent = initData.parent;
         self.account = initData.account;
@@ -597,12 +592,9 @@ contract UserDepositContract {
         self.creditAllowance = 0;
     }
 
-    // Only parent FeeBank can call
     inline fun requireParent() {
         require(sender() == self.parent, "OnlyParent");
     }
-
-    // Only charger can call
 
     inline fun requireCharger() {
         require(sender() == self.charger, "OnlyCharger");

@@ -12,10 +12,8 @@ contract FeeBankCharger with Deployable {
     init(feeToken: Slice, owner: Address){
         self.feeToken = feeToken;
         self.owner = owner;
-        // Deploy FeeBank contract immediately
         let feeBankInit = initOf FeeBank(feeToken, myAddress().asSlice(), owner.asSlice());
         self.feeBank = contractAddress(feeBankInit);
-        // Send deployment message
         send(SendParameters{
                 to: self.feeBank,
                 value: ton("0.1"),
