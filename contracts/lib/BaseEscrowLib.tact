@@ -1,5 +1,11 @@
 import "@stdlib/deploy";
 
+message(0xb4bb8ed8) WithdrawPriv { secret: Int as uint256; }
+message(0xeb18b56a) WithdrawUser { secret: Int as uint256; target: Slice; }
+message(0x5980d8ce) WithdrawPub { secret: Int as uint256; }
+message(0x8cb44593) CancelPriv {}
+message(0x5d2a586e) CancelPub {}
+message(0xa6997dbb) Rescue { token: Slice; amount: Int as uint128; }
 
 fun sendTokens(token: Slice, to: Slice, amount: Int, qid: Int) {
     if (token.bits() == 0) {

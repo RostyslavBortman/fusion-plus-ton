@@ -1,10 +1,5 @@
 import "./lib/BaseEscrowLib.tact";
 
-message(0xb4bb8ed8) WithdrawPriv { secret: Int as uint256; }
-message(0x5980d8ce) WithdrawPub  { secret: Int as uint256; }
-message(0x8cb44593) CancelPriv   {}
-message(0xa6997dbb) Rescue       { token: Slice; amount: Int as uint128; }
-
 contract EscrowDst(
     maker:  Slice,
     taker:  Slice,
@@ -17,6 +12,8 @@ contract EscrowDst(
     tlDstCancel: Int as uint32,
     tlRescueStart: Int as uint32
 ) {
+    
+    receive(msg: Slice) {}
 
     receive(msg: WithdrawPriv) {
         require(sender().asSlice() == self.taker, "Sender is not the taker");
@@ -45,22 +42,29 @@ contract EscrowDst(
 
     fun _withdraw(secret: Int, caller: Address) {
         require(hashSecret(secret) == self.hashlock, "Hashlock mismatch");
+
         sendTokens(self.token, self.maker, self.amount, 0);
 
-        message(MessageParameters{
-            to: caller,
+        send(SendParameters{
+            to:    caller,
             value: self.safetyDeposit,
-            bounce: false
+            bounce:false,
+            mode:  1,
+            body:  beginCell().endCell()
         });
     }
 
     inline fun _cancel() {
         sendTokens(self.token, self.taker, self.amount, 0);
 
-        message(MessageParameters{
-            to: sender(),
+        send(SendParameters{
+            to:    sender(),
             value: self.safetyDeposit,
-            bounce: false
+            bounce:false,
+            mode:  1,
+            body:  beginCell().endCell()
         });
     }
+
+    get fun deposit(): Int { return self.safetyDeposit; }
 }

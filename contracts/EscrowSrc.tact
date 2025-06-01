@@ -1,22 +1,5 @@
 import "./lib/BaseEscrowLib.tact";
 
-message(0xb4bb8ed8) WithdrawPriv {
-    secret: Int as uint256;
-}
-message(0xeb18b56a) WithdrawTo {
-    secret: Int as uint256;
-    target: Slice;
-}
-message(0x5980d8ce) WithdrawPub {
-    secret: Int as uint256;
-}
-message(0x8cb44593) CancelPriv {}
-message(0x5d2a586e) CancelPub {}
-message(0xa6997dbb) Rescue {
-    token: Slice;
-    amount: Int as uint128;
-}
-
 contract EscrowSrc(
     maker: Slice,
     taker: Slice,
@@ -31,22 +14,24 @@ contract EscrowSrc(
     tlRescueStart: Int as uint32,
 ) {
 
+    receive(msg: Slice) {}
+
     receive(msg: WithdrawPriv) {
         require(sender() == self.taker.asAddress(0), "Sender is not the taker");
         require(now() >= self.tlSrcWithdraw && now() < self.tlSrcCancel, "Invalid time for withdrawal");
-        self._withdraw(msg.secret, sender().asSlice());
+        self._withdraw(msg.secret, sender());
     }
 
-    receive(msg: WithdrawTo) {
+    receive(msg: WithdrawUser) {
         require(sender() == self.taker.asAddress(0), "Sender is not the taker");
         require(now() >= self.tlSrcWithdraw && now() < self.tlSrcCancel, "Invalid time for withdrawal");
-        self._withdraw(msg.secret, msg.target);
+        self._withdraw(msg.secret, msg.target.asAddress(0));
     }
 
     receive(msg: WithdrawPub) {
         require(self.hasAccessToken(sender()), "No access-token");
         require(now() >= self.tlSrcPubWithdraw && now() < self.tlSrcCancel, "Invalid time for public withdrawal");
-        self._withdraw(msg.secret, self.taker);
+        self._withdraw(msg.secret, self.taker.asAddress(0));
     }
 
     receive(msg: CancelPriv) {
@@ -66,24 +51,29 @@ contract EscrowSrc(
         sendTokens(msg.token, sender().asSlice(), msg.amount, 0);
     }
 
-    fun _withdraw(secret: Int, target: Slice) {
+    fun _withdraw(secret: Int, caller: Address) {
         require(hashSecret(secret) == self.hashlock, "Hashlock mismatch");
-        sendTokens(self.token, target, self.amount, 0);
 
-        message(MessageParameters {
-            to: sender(),
+        sendTokens(self.token, self.maker, self.amount, 0);
+
+        send(SendParameters{
+            to:    caller,
             value: self.safetyDeposit,
-            bounce: false,
+            bounce:false,
+            mode:  1,
+            body:  beginCell().endCell()
         });
     }
 
-    fun _cancel() {
-        sendTokens(self.token, self.maker, self.amount, 0);
+    inline fun _cancel() {
+        sendTokens(self.token, self.taker, self.amount, 0);
 
-        message(MessageParameters {
-            to: sender(),
+        send(SendParameters{
+            to:    sender(),
             value: self.safetyDeposit,
-            bounce: false,
+            bounce:false,
+            mode:  1,
+            body:  beginCell().endCell()
         });
     }
 

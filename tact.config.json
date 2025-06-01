@@ -60,6 +60,26 @@
         "debug": false,
         "external": false
       }
+    },
+    {
+      "name": "escrow-factory",
+      "path": "contracts/EscrowFactory.tact",
+      "output": "build/escrow-factory",
+      "mode": "full",
+      "options": {
+        "debug": false,
+        "external": false
+      }
+    },
+    {
+      "name": "lop",
+      "path": "contracts/LOP.tact",
+      "output": "build/lop",
+      "mode": "full",
+      "options": {
+        "debug": false,
+        "external": false
+      }
     }
   ]
 }
